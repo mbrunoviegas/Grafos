@@ -10,15 +10,12 @@ class Graph
 private:
     int numVertices;
     int **matrix;
-    int *path;
-    bool bolada;
 
 public:
     Graph(int numVertices)
     {
         this->numVertices = numVertices;
         this->matrix = new int *[numVertices];
-        this->bolada = true;
 
         for (int i = 0; i < this->numVertices; i++)
             matrix[i] = new int[numVertices];
