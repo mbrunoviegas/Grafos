@@ -13,13 +13,13 @@ void initArray(int *arr, int n, int val)
         arr[i] = val;
 }
 
-int minDistance(int *visited, int *dist, int n)
+int minDistance(bool *visited, int *dist, int n)
 {
     int min = INFINITY;
     int u = 0;
     for (int i = 0; i < n; i++)
     {
-        if ((visited[i] == 0) && dist[i] < min)
+        if (!visited[i] && dist[i] < min)
         {
             min = dist[i];
             u = i;
@@ -34,40 +34,39 @@ void clearEdge(int **matrix, int parent, int v)
     matrix[v][parent] = -1;
 }
 
-int dijkstra(int **matrix, int n)
+int dijkstra(int **matrix, int numVertex)
 {
-    int *visited = new int[n];
-    int *dist = new int[n];
-    int *dist2 = new int[n];
-    int *parent = new int[n];
+    bool *visited = new bool[numVertex];
+    int *dist = new int[numVertex];
+    int *parent = new int[numVertex];
 
-    initArray(visited, n, 0);
-    initArray(dist, n, INFINITY);
-    initArray(dist2, n, INFINITY);
-    initArray(parent, n, -1);
+    for (int i = 0; i < numVertex; i++)
+        visited[i] = false;
+
+    initArray(dist, numVertex, INFINITY);
+    initArray(parent, numVertex, -1);
 
     visited[0] = 0;
-    dist2[0] = 0;
+    dist[0] = 0;
 
     int u = 0;
 
-    for (int i = 0; i < n; i++)
+    for (int i = 0; i < numVertex; i++)
     {
-        for (int v = 0; v < n; v++)
+        for (int v = 0; v < numVertex; v++)
         {
             if ((visited[v] != 1) && (matrix[u][v] != -1) && (v != u) && (dist[v] > dist[u] + matrix[u][v]))
             {
                 dist[v] = dist[u] + matrix[u][v];
-                dist2[v] = dist2[u] + matrix[u][v];
                 parent[v] = u;
             }
         }
-        visited[u] = dist[u] = 1;
-        u = minDistance(visited, dist, n);
+        visited[u] = true;
+        u = minDistance(visited, dist, numVertex);
     }
 
-    int i = n - 1;
-    int sum = dist2[n - 1];
+    int i = numVertex - 1;
+    int sum = dist[numVertex - 1];
 
     while (true)
     {
