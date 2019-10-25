@@ -1,221 +1,148 @@
 #include <iostream>
 #include <cstring>
 #include <climits>
+#include <string>
+
+#define INFINITY INT_MAX
 
 using namespace std;
 
-class Graph
+void initArray(int *arr, int n, int val)
 {
+    for (int i = 0; i < n; i++)
+        arr[i] = val;
+}
 
-private:
-    int numVertices;
-    int **matrix;
-    int *dist;
-    int *sPath;
-
-public:
-    Graph(int numVertices)
+int minDistance(int *visited, int *dist, int n)
+{
+    int min = INFINITY;
+    int u = 0;
+    for (int i = 0; i < n; i++)
     {
-        this->numVertices = numVertices;
-        this->matrix = new int *[numVertices];
-        this->dist = new int[numVertices];
-        this->sPath = new int[numVertices];
-
-        for (int i = 0; i < this->numVertices; i++)
-            matrix[i] = new int[numVertices];
-
-        for (int i = 0; i < this->numVertices; i++)
-            memset(matrix[i], 0, this->numVertices * sizeof(int));
-    }
-
-    ~Graph()
-    {
-        for (int i = 0; i < numVertices; i++)
-            delete[] this->matrix[i];
-        delete[] this->matrix;
-        delete[] this->sPath;
-        delete[] this->dist;
-    }
-
-    void buildMatrix(int v1, int v2, int dist)
-    {
-        matrix[v1 - 1][v2 - 1] = dist;
-        matrix[v2 - 1][v1 - 1] = dist;
-    }
-
-    int *getDist()
-    {
-        return this->dist;
-    }
-
-    int *getShortestPath()
-    {
-        return this->sPath;
-    }
-
-    void clearEdge(int i, int parent)
-    {
-        matrix[i][parent] = 0;
-        matrix[parent][i] = 0;
-    }
-
-    int minDistance(int dist[], bool sptSet[])
-    {
-        int min = INT_MAX, min_index;
-
-        for (int v = 0; v < this->numVertices; v++)
+        if ((visited[i] == 0) && dist[i] < min)
         {
-            if (sptSet[v] == false && dist[v] <= min)
-            {
-                min = dist[v], min_index = v;
-            }
-        }
-        return min_index;
-    }
-
-    void dijkstra(int u)
-    {
-
-        memset(this->dist, INT_MAX, this->numVertices * sizeof(int));
-
-        bool sptSet[this->numVertices];
-
-        for (int i = 0; i < this->numVertices; i++)
-            dist[i] = INT_MAX, sptSet[i], sPath[i] = -1;
-
-        dist[u] = 0;
-        int count = 0;
-        while (count < this->numVertices - 1)
-        {
-            u = minDistance(dist, sptSet);
-            sptSet[u] = true;
-            for (int v = 0; v < this->numVertices; v++)
-            {
-                if (!sptSet[v] && matrix[u][v] && dist[u] != INT_MAX && dist[u] + matrix[u][v] < dist[v])
-                {
-                    sPath[v] = u;
-                    dist[v] = dist[u] + matrix[u][v];
-                }
-            }
-
-            count++;
+            min = dist[i];
+            u = i;
         }
     }
-};
+    return u;
+}
+
+void clearEdge(int **matrix, int parent, int v)
+{
+    matrix[parent][v] = -1;
+    matrix[v][parent] = -1;
+}
+
+int dijkstra(int **matrix, int n)
+{
+    int *visited = new int[n];
+    int *dist = new int[n];
+    int *dist2 = new int[n];
+    int *parent = new int[n];
+
+    initArray(visited, n, 0);
+    initArray(dist, n, INFINITY);
+    initArray(dist2, n, INFINITY);
+    initArray(parent, n, -1);
+
+    visited[0] = 0;
+    dist2[0] = 0;
+
+    int u = 0;
+
+    for (int i = 0; i < n; i++)
+    {
+        for (int v = 0; v < n; v++)
+        {
+            if ((visited[v] != 1) && (matrix[u][v] != -1) && (v != u) && (dist[v] > dist[u] + matrix[u][v]))
+            {
+                dist[v] = dist[u] + matrix[u][v];
+                dist2[v] = dist2[u] + matrix[u][v];
+                parent[v] = u;
+            }
+        }
+        visited[u] = dist[u] = 1;
+        u = minDistance(visited, dist, n);
+    }
+
+    int i = n - 1;
+    int sum = dist2[n - 1];
+
+    while (true)
+    {
+        if (parent[i] != -1)
+        {
+            clearEdge(matrix, parent[i], i);
+            i = parent[i];
+        }
+        else if (i == 0)
+            return sum;
+        else
+            return -1;
+    }
+}
+
+void buildMatrix(int **matrix, int v1, int v2, int dist)
+{
+    matrix[v1 - 1][v2 - 1] = dist;
+    matrix[v2 - 1][v1 - 1] = dist;
+}
 
 int main()
 {
-    int numVertex; //each city is a vertex
-    int numEdges;  //each route is a edge
-    int v1;        //city 1
-    int v2;        //city 2
-    int price = 0;
-    int numFriends = 0;
-    int numSeats = 0;
-    int k = 0;
-
-    while (cin >> numVertex)
+    int v, e;
+    int inst = 1;
+    while (cin >> v >> e)
     {
-        cin >> numEdges;
-
-        Graph *graph = new Graph(numVertex);
-
-        for (int i = 0; i < numEdges; i++)
+        int **matrix = new int *[v];
+        for (int i = 0; i < v; i++)
         {
-            cin >> v1 >> v2 >> price;
-            graph->buildMatrix(v1, v2, price);
+            matrix[i] = new int[v];
+            memset(matrix[i], -1, v * sizeof(int));
         }
 
+        for (int i = 0; i < e; i++)
+        {
+            int v1, v2, price;
+            cin >> v1 >> v2 >> price;
+            buildMatrix(matrix, v1, v2, price);
+        }
+
+        int numFriends, numSeats;
         cin >> numFriends >> numSeats;
 
-        cout << "Instancia " << k + 1 << endl
-             << endl;
+        int finalPrice = 0;
 
-        if (numSeats * numEdges < numFriends)
+        while (numFriends > 0)
+        {
+            if (numFriends > numSeats)
+                finalPrice += (dijkstra(matrix, v) * numSeats);
+            else
+                finalPrice += (dijkstra(matrix, v) * numFriends);
+
+            numFriends -= numSeats;
+            if (finalPrice == -1)
+                break;
+        }
+
+        cout << "Instancia " << inst << endl
+             << endl;
+        inst++;
+        if (finalPrice == -1)
         {
             cout << "impossivel" << endl
+                 << endl
+                 << endl
                  << endl;
         }
         else
         {
-            int finalPrice = 0;
-            graph->dijkstra(0);
-
-            int *path = new int[numVertex];
-            int *prices = new int[numVertex];
-
-            for (int u = 0; u < numVertex - 1; u++)
-                path[u] = 0;
-
-            for (int u = 0; u < numVertex - 1; u++)
-                prices[u] = 0;
-
-            prices = graph->getDist();
-            path = graph->getShortestPath();
-
-            int aux = numFriends;
-            numFriends -= numSeats;
-
-            if (numFriends > 0)
-            {
-                finalPrice += (prices[numVertex - 1] * (aux - numSeats));
-            }
-            else
-            {
-                finalPrice += (prices[numVertex - 1] * aux);
-            }
-
-            if (path[numVertex - 1] != -1)
-            {
-                while (numFriends > 0)
-                {
-                    if (numFriends >= numSeats)
-                    {
-                        int i = numVertex - 1;
-                        while (i != -1)
-                        {
-                            if (path[i] != -1)
-                            {
-                                graph->clearEdge(i, path[i]);
-                                i = path[i];
-                            }
-                            else if (i == 0)
-                            {
-                                i = -1;
-                            }
-                            else
-                            {
-                                i--;
-                            }
-                        }
-                        graph->dijkstra(0);
-                        prices = graph->getDist();
-                        finalPrice += prices[numVertex - 1] * numSeats;
-                    }
-                    else
-                    {
-                        prices = graph->getDist();
-                        finalPrice += prices[numVertex - 1] * numFriends;
-                        break;
-                    }
-                    numFriends -= numSeats;
-                }
-
-                cout << finalPrice << endl
-                     << endl
-                     << endl
-                     << endl;
-            }
-            else
-            {
-                cout << "impossivel" << endl
-                     << endl;
-            }
+            cout << finalPrice << endl
+                 << endl
+                 << endl
+                 << endl;
         }
-
-        delete graph;
-        k++;
     }
-
     return 0;
 }
